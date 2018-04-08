@@ -58,6 +58,43 @@ namespace Plugin.Share
             }
         }
 
+        /// <summary>
+        /// Share an image with compatible services
+        /// </summary>
+        /// <param name="image">Path to image to share</param>
+		/// <param name="message">Message to share</param>
+        /// <param name="options">Platform specific options</param>
+        /// <returns>True if the operation was successful, false otherwise</returns>
+        public Task<bool> ShareImage(string imagePath, string text = "", ShareOptions options = null)
+        {
+            if (imagePath == null)
+                throw new ArgumentNullException(nameof(imagePath));
+
+            try
+            {
+				var uri = (Android.Net.Uri.FromFile(new Java.IO.File(imagePath)));
+				
+                var intent = new Intent(Intent.ActionSend);
+                intent.SetType("image/*");
+                sharingIntent.SetFlags(ActivityFlags.GrantReadUriPermission);
+				
+				sharingIntent.PutExtra(Intent.ExtraStream, uri);
+				
+                if (text != "")
+                    intent.PutExtra(Intent.ExtraText, text);
+					
+                var chooserIntent = Intent.CreateChooser(intent, options?.ChooserTitle);
+                chooserIntent.SetFlags(ActivityFlags.NewTask);
+                Application.Context.StartActivity(chooserIntent);
+
+                return Task.FromResult(true);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Unable to share: " + ex.Message);
+                return Task.FromResult(false);
+            }
+        }
 
         /// <summary>
         /// Share a message with compatible services
